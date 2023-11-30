@@ -58,7 +58,8 @@ with colA:
     col1, col2 = st.columns(2)
 
     with col1:
-        date = st.date_input("Select the Date", datetime.date(2023, 7, 6))
+        current_date = datetime.datetime.today().date()
+        date = st.date_input("Select the Date", current_date)
 
         # Extract year, month, day, and day of the week
         current_day = date.strftime('%A')
