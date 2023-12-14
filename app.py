@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import datetime
 import pandas as pd
+import plotly.express as px
 from PIL import Image
 
 pipe = pickle.load(open('pipe.pkl', 'rb'))
@@ -87,7 +88,7 @@ with colA:
     if st.button('Predict Price'):
         if selection_type == 'Entire Day':
             for current_hour in range(24):
-                for current_min in range(0, 61, 10):
+                for current_min in range(0, 60, 10):
                     query = np.array([cab_type, pick_up, destination, current_day, current_hour,
                                       current_min, current_month, current_year])
 
@@ -108,26 +109,27 @@ with colA:
                     results.append(result_dict)
 
         if selection_type == 'Manual Selection':
-            for current_hour in range(current_hour-time_frame, current_hour+time_frame, 1):
-                for current_min in range(0, 61, 10):
-                    query = np.array([cab_type, pick_up, destination, current_day, current_hour,
-                                      current_min, current_month, current_year])
+            for current_hour in range(current_hour - time_frame, current_hour + time_frame + 1, 1):
+                for current_min in range(0, 60, 10):
+                    if 0 <= current_hour < 24:  # Ensure the hour is within the valid range
+                        query = np.array([cab_type, pick_up, destination, current_day, current_hour,
+                                          current_min, current_month, current_year])
 
-                    query = query.reshape(1, 8)
+                        query = query.reshape(1, 8)
 
-                    prediction = pipe.predict(query)[0]
-                    rounded_prediction = round(prediction, 2)
+                        prediction = pipe.predict(query)[0]
+                        rounded_prediction = round(prediction, 2)
 
-                    prediction_route = pipe_route.predict(query)[0]
-                    rounded_prediction_route = round(prediction_route, 2)
+                        prediction_route = pipe_route.predict(query)[0]
+                        rounded_prediction_route = round(prediction_route, 2)
 
-                    result_dict = {
-                        'Time': f'{current_hour:02d}:{current_min:02d}',
-                        'Cab_Price': rounded_prediction,
-                        'Route Time': rounded_prediction_route
-                    }
+                        result_dict = {
+                            'Time': f'{current_hour:02d}:{current_min:02d}',
+                            'Cab_Price': rounded_prediction,
+                            'Route Time': rounded_prediction_route
+                        }
 
-                    results.append(result_dict)
+                        results.append(result_dict)
 
         with colB:
             if selection_type == "Entire Day":
@@ -151,6 +153,39 @@ with colA:
                 st.write("### Predicted Results 📊:")
                 st.dataframe(results_df)
 
-                # Display the minimum price message
 
                 st.write(f"### The minimum price for this route is <span style='color: green; font-weight: bold;'>{min_price}</span> at <span style='color: green; font-weight: bold;'>{min_time}</span>", unsafe_allow_html=True)
+
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+
+        st.title('Analysis of Price and Route Time')
+
+        fig = px.line(results_df, x='Time', y='Cab_Price', title='Cab Price Prediction Over Time',
+                      labels={'Time': 'Time of Day', 'Cab_Price': 'Cab Price'})
+
+        fig.update_traces(line=dict(color='#FC0080'))
+
+        fig.update_layout(xaxis=dict(tickmode='linear', tick0=0, dtick=4))
+        st.plotly_chart(fig)
+
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+
+        fig_route = px.line(results_df, x='Time', y='Route Time', title='Route Time Prediction Over Time',
+                            labels={'Time': 'Time of Day', 'Route Time': 'Route Time'})
+        fig_route.update_traces(line=dict(color='#FC0080'))
+        fig_route.update_layout(xaxis=dict(tickmode='linear', tick0=0, dtick=4))
+
+        st.plotly_chart(fig_route)
